@@ -1,0 +1,134 @@
+/* check assumption 1 in BBBGT23
+https://eprint.iacr.org/2022/1031
+*/
+load "tools.mgm";
+
+
+
+
+function MyRandomRankSyndromeInstance(n,k,r,A,fqm,fq:verb:=0, fact1:=true, seed:=[0,0])
+    if seed[1] ne 0 then SetSeed(seed[1],seed[2]);end if;
+    a,b := GetSeed();
+    if verb ge 1 then printf "\nSeed=%o,%o",a,b;end if;
+    
+    
+    e   := RandomVectorofWeight(n,r,fqm,fq);
+    assert RankWeight(e,fqm,fq) eq r;
+    
+     
+    Emat,Cmat := RankSupport(e,fqm,fq);
+    
+    D := Dual(LinearCode(Cmat));
+    
+    R := LinearCode( VectorSpace(fqm,n) ! 0);
+    
+    
+    if A ne 0 then
+    	repeat
+    	    repeat
+    	    	new_r := Random(D);
+    	    until new_r ne 0;
+    	    R := R + LinearCode(ChangeRing(new_r,fqm));
+    	until Dimension(R) eq A;
+    end if;
+    
+    C := RandomLinearCode(fqm,n,k);
+    
+    D := Dual(C) + R;  // D has gen H / R
+    
+    
+    C := Dual(D);
+    
+    new_k := k-A;
+    
+    k := new_k;
+    
+    if Dimension(C) ne new_k then
+    	print "incorrect dimension";
+    end if;
+    
+    
+    
+    if fact1 then
+	C := StandardForm(C);
+    end if;
+    G := GeneratorMatrix(C);
+    
+    y :=  Random(VectorSpace(fqm,k)) * G + e;
+    if fact1 then
+	y := y - Vector([y[i] : i in [1..k]])*G;
+	yn := Normalize(y);
+	i := Index(ElementToSequence(yn),1);
+        // if r <= rankGV then y should not be 0
+        assert i ne 0;
+	e := e/y[i];
+	y := y/y[i];
+	// up to permutation of columns, assume y[k+1]=1
+	if i ne k+1 then
+	    if verb ge 1 then printf "\nPermutation i=%o k+1=%o",i,k+1;end if;
+	    p := Sym(n)!(k+1,i);
+	    C := C^p;
+	    y := y^p;
+	    G := GeneratorMatrix(C);
+	    e := e^p;
+	end if;
+    end if;
+    assert ColumnSubmatrix(G,[1..k]) eq IdentityMatrix(fqm,k) and {y[i] : i in [1..k]} eq {0} and y[k+1] eq 1;
+    assert  (y-e)*Transpose(GeneratorMatrix(Dual(LinearCode(G)))) eq 0;
+    return G,y,e;
+end function;
+
+
+
+
+
+for q in [2..2] do
+print q;
+fq  := GF(q);
+for m in [12..12] do
+fqm<w> := ext<fq | m>;
+
+
+A := 2;
+
+// works for all values, except sometimes for r=rankGV where there are several solutions
+for n in [m..m] do
+    print "n=",n;
+    for k in [A+1..n-2] do
+    print "k=",k;
+    gv := rankGV(q,m,n,k);
+    print "gv=",gv;
+	for r in [(gv-1)..(gv-1)] do
+	    print "r=",r;
+	    // repeat 10 times
+	    for i in [1..10] do
+	    // generate a RD instance with a solution
+	    
+	    
+	    G,y,e := MyRandomRankSyndromeInstance(n,k,r,A,fqm,fq: verb := 0 );
+	    
+	    new_k := k-A;
+	    
+	    
+	    M := MaxMinorsMatrix(G,y,r,fqm,fq);
+	    if Rank(M) ne Min(m*Binomial(n-new_k -1,r),Binomial(n,r)-1) then
+		// assumption is not satisfied
+		printf "\n######\n(q,m,n,k,r,rGV)=(%o,%o,%o,%o,%o,%o)",q,m,n,new_k ,r,rankGV(q,m,n,k );
+		printf " M %o x %o rank %o (%o)",Nrows(M),Ncols(M),Rank(M),Nrows(M) eq m*Binomial(n-new_k -1,r) and Ncols(M) eq Binomial(n,r);
+		printf " ***WARNING RANK , r=%o, rGV=%o ***\n",r,rankGV(q,m,n,new_k );
+	    end if;
+	    // check that the solution is the good one if we can solve
+	//    if Rank(M) eq Ncols(M)-1 then
+//		E := MaxMinorsSolve(M,G,y,r);
+//	        Hy := ParityCheckMatrix(LinearCode(G)+LinearCode(y));
+//	        assert (RankWeight(E,fqm,fq) le r)  and (E ne 0) and E*Transpose(Hy) eq 0;
+//	    end if;
+	end for;
+	end for;
+    end for;
+end for;
+end for;
+
+end for;
+
+print "done";
