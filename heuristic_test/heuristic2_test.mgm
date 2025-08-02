@@ -1,5 +1,5 @@
-/* check assumption 1 in BBBGT23
-https://eprint.iacr.org/2022/1031
+/* check Heuristic 2 in 
+https://eprint.iacr.org/2025/1303
 */
 load "tools.mgm";
 
@@ -83,47 +83,76 @@ end function;
 
 
 for q in [2..2] do
-print q;
+print "q=",q;
 fq  := GF(q);
-for m in [12..12] do
+for m in [20..20] do
+print "m=",m;
 fqm<w> := ext<fq | m>;
 
 
-A := 2;
+A := 1;
+print "a'=",A;
 
-// works for all values, except sometimes for r=rankGV where there are several solutions
-for n in [m..m] do
+for n in [20..20] do
     print "n=",n;
-    for k in [A+1..n-2] do
-    print "k=",k;
-    gv := rankGV(q,m,n,k);
-    print "gv=",gv;
-	for r in [(gv-1)..(gv-1)] do
+
+    for k in [15..15] do
+   	print "k=",k;
+    	gv := rankGV(q,m,n,k);
+    	print "gv=",gv;
+    
+	for r in [2..2] do
 	    print "r=",r;
-	    // repeat 10 times
-	    for i in [1..10] do
+	    
+	    counter := 0;
+	    high_rank_counter := 0;
+	    max_rank_counter := 0;
+	   
+	    predicted_rank := m*Binomial(n-k-1,r) + Binomial(n,r) - Binomial(n-A,r); 
+	    variables := Binomial(n,r)-1;
+	    print "Predicted:", predicted_rank, " Variables:", variables;
+	   
+	    	    
+	    for i in [1..2000] do
+	    counter := counter + 1;
+	    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bCounter:%o", counter; 
+	    
 	    // generate a RD instance with a solution
-	    
-	    
 	    G,y,e := MyRandomRankSyndromeInstance(n,k,r,A,fqm,fq: verb := 0 );
-	    
 	    new_k := k-A;
 	    
-	    
 	    M := MaxMinorsMatrix(G,y,r,fqm,fq);
-	    if Rank(M) ne Min(m*Binomial(n-new_k -1,r),Binomial(n,r)-1) then
-		// assumption is not satisfied
-		printf "\n######\n(q,m,n,k,r,rGV)=(%o,%o,%o,%o,%o,%o)",q,m,n,new_k ,r,rankGV(q,m,n,k );
-		printf " M %o x %o rank %o (%o)",Nrows(M),Ncols(M),Rank(M),Nrows(M) eq m*Binomial(n-new_k -1,r) and Ncols(M) eq Binomial(n,r);
-		printf " ***WARNING RANK , r=%o, rGV=%o ***\n",r,rankGV(q,m,n,new_k );
+	    rankM := Rank(M);
+	   
+	    if rankM gt predicted_rank then
+	       print "\n\nrank M =", rankM, " Predicted:", predicted_rank, " Variables:", variables; 
+     	       high_rank_counter := high_rank_counter + 1;
+     	       print high_rank_counter, max_rank_counter;
 	    end if;
-	    // check that the solution is the good one if we can solve
-	//    if Rank(M) eq Ncols(M)-1 then
-//		E := MaxMinorsSolve(M,G,y,r);
-//	        Hy := ParityCheckMatrix(LinearCode(G)+LinearCode(y));
-//	        assert (RankWeight(E,fqm,fq) le r)  and (E ne 0) and E*Transpose(Hy) eq 0;
-//	    end if;
+	    
+	    
+	    if rankM eq Min(variables, m*Binomial(n-k+A-1,r)-(m-1)*Binomial(A,r)) then
+	    	print "Maximum rank";
+	    	max_rank_counter := max_rank_counter + 1;
+	    	print high_rank_counter, max_rank_counter;
+	    end if;
+
+	    if rankM eq variables then
+		E := MaxMinorsSolve(M,G,y,r);
+	        Hy := ParityCheckMatrix(LinearCode(G)+LinearCode(y));
+	        assert (RankWeight(E,fqm,fq) le r)  and (E ne 0) and E*Transpose(Hy) eq 0;
+	        
+	        if LinearCode(e) eq LinearCode(E) then
+	           print "Original solution found (up to scalar)";
+	           print  e,E,"";
+	        end if;	
+	   
+	    end if;
+		
 	end for;
+	
+	print "\n",high_rank_counter, max_rank_counter;
+	
 	end for;
     end for;
 end for;
