@@ -1,6 +1,7 @@
 /* check heuristic 2 in BWW25
-
+link to be added
 */
+
 load "tools.mgm";
 
 q := 2;
@@ -42,7 +43,7 @@ for i in [1..N] do
     repeat
 	    conditionFailed := false;
 	    	
-	    // create h-dim supsupport S contained in rowsupport
+	    // create h-dim subsupport S contained in rowsupport
 	    // even though attacker does not have access to rowsupport,  
 	    // random S is contained in rowsupport with success probability q^{-h(n-r)}
 	    S := LinearCode( VectorSpace(fq,n) ! 0);
@@ -79,15 +80,17 @@ for i in [1..N] do
 		yprime := ypi_new/normalizationFactor;
 		
 	until conditionFailed eq false;
-	 
+
+	// check that Gprime, yprime are in standardform and normalized
 	assert ColumnSubmatrix(Gprime,[1..k]) eq IdentityMatrix(fqm,k) and {yprime[i] : i in [1..k]} eq {0} and yprime[k+1] eq 1;
 	
 	// create parity-check matrix of reduced code Cprime
 	Hprime := Transpose(GeneratorMatrix(Dual(Cprime)));
-	
+
+	// check that yprime minus normailzed error is in code Cprime
 	assert (yprime-(e/normalizationFactor)*PI)*Hprime eq 0;
 	
-	// create MaxMinors system M, and compute rank, number of eqs and number of vars
+	// create MaxMinors system M, and compute rank, number of eq's and number of var's
 	printf "#Eq's = m*Binomial(n-h-k-1,r-h) = %o\n", m*Binomial(n-h-k-1,r-h);
 	printf "#Var's = Binomial(n-a-h,r-h)-1 = %o\n", Binomial(n-h,r-h)-1;
 	M := MaxMinorsMatrix(Gprime, yprime, r-h, fqm, fq);
@@ -95,7 +98,7 @@ for i in [1..N] do
 	printf "Rank(M) = %o\n",Mrank;
 	printf "Rank(M) = min(#eq's, #var's)?: %o\n", Mrank eq Min(m*Binomial(n-h-k-1,r-h),Binomial(n-h,r-h)-1);
 	
-	// check that the solution is the good one if we can solve
+	// if we can solve, find solution and check agains original solution e*PI
 	if Mrank eq Ncols(M)-1 then
 		// solve for rank (r-h) error and obtain scaled solution e_hat
 		e_hat := MaxMinorsSolve(M, Gprime, yprime, r-h);
@@ -104,6 +107,5 @@ for i in [1..N] do
 		scalar := normalizationFactor*(yprime*Hprime)[1]/(e_hat*Hprime)[1];
 		printf "Original solution found: %o\n", (e*PI eq scalar*e_hat); 
 	end if;
-
 	   
 end for;
