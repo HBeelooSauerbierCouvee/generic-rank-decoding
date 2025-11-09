@@ -26,7 +26,6 @@ k := k-a;
 printf "\nInstance parameters after zero-reduction\n(q,m,n-a,k-a,r)=(%o,%o,%o,%o,%o)\n",q,m,n,k,r;
 printf "\nInstance parameters after zero- and subsupport-reduction\n(q,m,n-a-h,k-a,r-h)=(%o,%o,%o,%o,%o)\n",q,m,n-h,k,r-h;
 
-
 // repeat N times trial: use zero-reduced parameters (q,m,n,k,r) -- perform subsupport-reduction with h -- solve MM equations --  check solution
 N := 10;
 for i in [1..N] do
@@ -39,18 +38,18 @@ for i in [1..N] do
 	Emat,Cmat := RankSupport(e,fqm,fq);
 	rowsupp := LinearCode(Cmat);
     	
-    	// create subsupport-reduced instance, repeat if one of the conditions fails
-    	repeat
-	    	conditionFailed := false;
+    // create subsupport-reduced instance, repeat if one of the conditions fails
+    repeat
+	    conditionFailed := false;
 	    	
-	    	// create h-dim supsupport S contained in rowsupport
-	    	// even though attacker does not have access to rowsupport,  
-	    	// random S is contained in rowsupport with success probability q^{-h(n-r)}
-	    	S := LinearCode( VectorSpace(fq,n) ! 0);
+	    // create h-dim supsupport S contained in rowsupport
+	    // even though attacker does not have access to rowsupport,  
+	    // random S is contained in rowsupport with success probability q^{-h(n-r)}
+	    S := LinearCode( VectorSpace(fq,n) ! 0);
 		if h ne 0 then
 			repeat
-		    	    S := S + LinearCode(Random(rowsupp));
-		    	until Dimension(S) eq h;
+		    	S := S + LinearCode(Random(rowsupp));
+		    until Dimension(S) eq h;
 		end if;
 		// from here onward, rowsupport and e are not used to compute solution
 		
@@ -72,9 +71,9 @@ for i in [1..N] do
 		ypi_new := ypi - Vector([ypi[j] : j in [1..k]])*Gprime;
 		yn := Normalize(ypi_new);
 		ind := Index(ElementToSequence(yn),1);
-        	assert ind ne 0;
+        assert ind ne 0;
 		if ind ne k+1 then
-	    		conditionFailed := true;
+	    	conditionFailed := true;
 		end if;
 		normalizationFactor := ypi_new[ind];
 		yprime := ypi_new/normalizationFactor;
