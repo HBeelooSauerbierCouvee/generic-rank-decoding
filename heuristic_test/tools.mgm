@@ -1,3 +1,5 @@
+// copy from https://github.com/mbardet/Rank-Decoding-tools
+
 forward RankWeight; // rank_weight(v,fqm,fq) returns Return the rank of the vector v in fqm over GF(q)
 forward Mat; // Mat(v,fqm,fq) returns the matrix in fq^(mxn) associated to v in fqm^n by writting each component of v in a basis of fqm over fq
 forward RandomVectorofWeight;// RandomVectorofWeight(n,w,fqm,fq);
